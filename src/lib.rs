@@ -22,6 +22,9 @@ impl Default for PrometheusMetrics {
     }
 }
 
+async fn metrics() {
+
+}
 
 impl PrometheusMetrics {
     pub fn registry(&self) -> &Registry {
@@ -45,33 +48,38 @@ impl PrometheusMetrics {
         }
     }
 
-    fn text(&self)-> String {
+    pub fn text(&self)-> String {
         let mut buffer = vec![];
         let encoder = TextEncoder::new();
-        encoder
-            .encode(&self.registry.gather(), &mut buffer)
-            .unwrap();
+        encoder.encode(&self.registry.gather(), &mut buffer).unwrap();
         String::from_utf8(buffer).unwrap()
     }
 }
 
 
-pub fn metrics() -> impl Filter<Extract = PrometheusMetrics, Error = Rejection> + Copy {
-    warp::any().and(warp::any().map(move ||
-        {
-            let p = PrometheusMetrics::new();
-            p.clone()
-        }
+// pub fn metrics() -> impl Filter<Extract = PrometheusMetrics, Error = Rejection> + Copy {
+//     warp::any().and(warp::any().map(move ||
+//         {
+//             let p = PrometheusMetrics::new();
+//             p.clone()
+//         }
 
-    )).and_then(|pm : PrometheusMetrics| async move {
-        Ok::<_, Rejection>(PrometheusMetrics::new())
-    })
-}
+//     )).and_then(|pm : PrometheusMetrics| async move {
+//         Ok::<_, Rejection>(PrometheusMetrics::new())
+//     })
+// }
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    use super::*;
+    use tokio;
+    #[tokio::test]
+    async fn test_server() {
+        let hello = warp::path!("hello" / String)
+        .map(|name| format!("Hello, {}!", name));
+
+    warp::serve(hello)
+        .run(([127, 0, 0, 1], 3030))
+        .await;
     }
 }
